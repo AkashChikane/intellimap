@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#FDFAF9" />
+    <title>IntelliMap</title>
+    <script>
+      (function () {
+        try {
+          var mode = localStorage.getItem("intellimap-color-mode") || "light";
+          if (mode !== "dark") mode = "light";
+          document.documentElement.setAttribute("data-theme", mode);
+          document.documentElement.style.colorScheme = mode;
+        } catch (e) {
+          document.documentElement.setAttribute("data-theme", "light");
+        }
+      })();
+    </script>
+    <link
+      rel="icon"
+      href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='12' fill='%231F2F57'/%3E%3Cpath d='M12 40 L32 16 L52 40' fill='none' stroke='%236091C3' stroke-width='6'/%3E%3Ccircle cx='32' cy='44' r='6' fill='%23FDFAF9'/%3E%3C/svg%3E"
+    />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=IBM+Plex+Sans:wght@400;500;600&display=swap"
+      rel="stylesheet"
+    />
+  </head>
+  <body>
+    <noscript>IntelliMap needs JavaScript.</noscript>
+    <div id="root"></div>
+  </body>
+</html>
