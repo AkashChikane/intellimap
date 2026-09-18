@@ -126,6 +126,7 @@ export default function Explorer({ runId }) {
   const [theme, setTheme] = useState("navy");
   const [showFindings, setShowFindings] = useState(false);
   const [showInspector, setShowInspector] = useState(false);
+  const [showToolbar, setShowToolbar] = useState(true);
   const [exportBusy, setExportBusy] = useState(false);
   const [excelBusy, setExcelBusy] = useState(false);
   const [spotlightOpen, setSpotlightOpen] = useState(false);
@@ -237,7 +238,7 @@ export default function Explorer({ runId }) {
       flowRef.current?.fitView?.({ padding: 0.16, duration: 200 });
     }, 80);
     return () => clearTimeout(timer);
-  }, [showFindings, showInspector, graph]);
+  }, [showFindings, showInspector, showToolbar, graph]);
 
   useEffect(() => {
     const id = pendingFocusRef.current;
@@ -438,6 +439,7 @@ export default function Explorer({ runId }) {
     "explorer",
     showFindings ? "" : "findings-hidden",
     showInspector ? "" : "inspector-hidden",
+    showToolbar ? "" : "toolbar-hidden",
   ]
     .filter(Boolean)
     .join(" ");
@@ -445,6 +447,17 @@ export default function Explorer({ runId }) {
   return (
     <div className={explorerClass}>
       <div className="toolbar">
+        {!showToolbar ? (
+          <button
+            type="button"
+            className="btn btn-ghost toolbar-reveal"
+            aria-expanded={false}
+            onClick={() => setShowToolbar(true)}
+          >
+            {t("showToolbar")}
+          </button>
+        ) : (
+          <>
         <button
           type="button"
           className={`chip-toggle ${showFindings ? "is-on" : ""}`}
@@ -546,6 +559,16 @@ export default function Explorer({ runId }) {
           {t("summary")}
         </button>
         {busy && <span className="muted">{t("loading")}</span>}
+        <button
+          type="button"
+          className="btn btn-ghost"
+          aria-expanded={true}
+          onClick={() => setShowToolbar(false)}
+        >
+          {t("hideToolbar")}
+        </button>
+          </>
+        )}
       </div>
 
       <aside className="side">

@@ -509,6 +509,11 @@ select.ctrl,
   padding: 12px;
 }
 .explorer .toolbar { grid-area: toolbar; }
+.explorer.toolbar-hidden .toolbar {
+  gap: 8px;
+  padding: 0;
+}
+.toolbar-reveal { margin-left: auto; }
 .explorer .side { grid-area: side; }
 .explorer .canvas { grid-area: canvas; }
 .explorer .rail { grid-area: rail; }
