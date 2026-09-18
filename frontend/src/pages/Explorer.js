@@ -354,25 +354,23 @@ export default function Explorer({ runId }) {
     setDraft("");
     setChatBusy(true);
     try {
-      await runBusy(t("loadingChat"), async () => {
-        const data = await chat(runId, {
-          frame_type: frameType,
-          frame_id: frameId,
-          hops,
-          hide_unresolved: hideUnresolved,
-          messages: next.map((m) => ({ role: m.role, content: m.content })),
-          dropped: chips,
-        });
-        const reply = {
-          role: "assistant",
-          content: data.answer || "",
-          actions: data.actions || [],
-          cards: data.cards || [],
-        };
-        setMessages([...next, reply]);
-        const auto = (data.actions || []).find((a) => a.type === "focus_node" || a.type === "highlight_nodes");
-        if (auto) runAction(auto);
+      const data = await chat(runId, {
+        frame_type: frameType,
+        frame_id: frameId,
+        hops,
+        hide_unresolved: hideUnresolved,
+        messages: next.map((m) => ({ role: m.role, content: m.content })),
+        dropped: chips,
       });
+      const reply = {
+        role: "assistant",
+        content: data.answer || "",
+        actions: data.actions || [],
+        cards: data.cards || [],
+      };
+      setMessages([...next, reply]);
+      const auto = (data.actions || []).find((a) => a.type === "focus_node" || a.type === "highlight_nodes");
+      if (auto) runAction(auto);
     } catch (err) {
       setMessages([...next, { role: "assistant", content: err.message }]);
     } finally {
