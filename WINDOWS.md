@@ -32,7 +32,7 @@ py -3 --version
 python --version
 ```
 
-Either `py -3` or `python` is enough. `start.bat` prefers `py -3`.
+`start.bat` uses **`python` on PATH** (then `py -3` if `python` is missing). It does **not** create a venv.
 
 ### Node.js 18 or newer (20 LTS is fine)
 
@@ -76,7 +76,7 @@ cd intellimap
 start.bat
 ```
 
-The first run creates `backend\.venv`, installs Python packages, and generates the sample workbook if it is missing. Wait until you see:
+The first run installs Python packages into the interpreter on PATH (no venv) and generates the sample workbook if it is missing. Wait until you see:
 
 ```
 IntelliMap API - http://127.0.0.1:8000
@@ -99,10 +99,10 @@ If a browser does not open, paste that URL yourself.
 
 - Header pill should read **API ready**.  
 - Click **Load sample landscape**.  
-- Optional LLM test (from the repo root, after `start.bat` has created the venv):
+- Optional LLM test (from the repo root, same `python` as `start.bat`):
 
 ```bat
-backend\.venv\Scripts\python backend\test_llm.py
+python backend\test_llm.py
 ```
 
 API docs: http://127.0.0.1:8000/docs  
@@ -140,14 +140,15 @@ Set-ExecutionPolicy -Scope CurrentUser RemoteSigned
 
 | What you see | Fix |
 | --- | --- |
-| `'py' is not recognized` / `'python' is not recognized` | Reinstall Python with **Add to PATH**, then open a **new** Command Prompt |
+| `'python' is not recognized` | Reinstall Python 3.11/3.12 from python.org with **Add to PATH**, then a **new** Command Prompt. `'py' is not recognized` is fine if `python --version` works |
 | `'node' is not recognized` | Reinstall Node LTS, new Command Prompt |
 | `npm` ENOENT at repo root | Always use `start-frontend.bat` (it `cd`s into `frontend`) |
 | Windows Defender SmartScreen on `start.bat` | More info → Run anyway (you built/cloned this repo) |
 | Port 3000 or 8000 already in use | Kill the PID with `taskkill` above, or close the old window |
 | API pill **offline** | Window 1 must be running first; check http://127.0.0.1:8000/api/health |
-| venv create fails | Install the **Windows installer** of Python, not the Store stub only |
-| `Microsoft Visual C++` errors on pip | Unusual for these wheels; update pip: `backend\.venv\Scripts\python -m pip install --upgrade pip` |
+| `error while generating package metadata` during pip | `start.bat` no longer uses a venv. Install **Python 3.11 or 3.12 from python.org** (tick Add to PATH), open a **new** Command Prompt, then `rmdir /s /q backend\.venv` and run `start.bat` again |
+| venv / `activate.bat` fails | Expected with the old script. Current `start.bat` ignores `backend\.venv` and calls `python` on PATH |
+| `Microsoft Visual C++` / Rust errors on pip | Use python.org 3.11/3.12 so pip can take wheels instead of compiling |
 
 ## Screenshots for the README
 

@@ -53,6 +53,8 @@ chmod +x start.sh start-frontend.sh
 
 `start.sh` creates `backend/.venv`, installs Python deps, generates the sample workbook if missing, and runs uvicorn with `--reload`. `start-frontend.sh` runs `npm install` if needed and starts CRA on port 3000.
 
+On Windows, `start.bat` does **not** use a venv. It installs into and runs the `python` already on PATH.
+
 Open http://localhost:3000. Health should show `llm_ready: true` when the key is valid: http://127.0.0.1:8000/api/health
 
 ## First-time setup (Windows)
@@ -156,8 +158,17 @@ API:
 
 ```bash
 python3 -m venv backend/.venv
-source backend/.venv/bin/activate   # Windows: backend\.venv\Scripts\activate
+source backend/.venv/bin/activate
 pip install -r backend/requirements.txt
+cd backend
+python -m uvicorn app.main:app --host 127.0.0.1 --port 8000 --reload
+```
+
+Windows (PATH Python, no venv):
+
+```bat
+python -m pip install --upgrade pip setuptools wheel
+python -m pip install --prefer-binary -r backend\requirements.txt
 cd backend
 python -m uvicorn app.main:app --host 127.0.0.1 --port 8000 --reload
 ```
@@ -204,7 +215,8 @@ If the UI shows **API offline**, the proxy cannot reach :8000. Start `./start.sh
 | Export SVG used to leave the page | Use the **Export SVG** button (blob download). Do not rely on a raw `/api/.../export/svg` navigation |
 | Find returns nothing for a nickname | Use Text with the `ApplicationID`, or switch to AI semantic search |
 | Chat / AI scan 503 | Key missing, wrong provider, or upstream quota. Check `.env` and `/api/health` |
-| Windows `python` not found | Install Python 3.11+ and tick “Add to PATH”, or use `py -3` |
+| Windows `python` not found | Install Python 3.11 or 3.12 from python.org and tick “Add to PATH” |
+| Windows pip “error while generating package metadata” | Do not use a venv. `start.bat` uses PATH `python`. Delete `backend\.venv` if leftover, use python.org 3.11/3.12, new Command Prompt, retry |
 | Sample xlsx missing | `python backend/generate_sample.py` |
 
 ## README screenshots (Windows)
