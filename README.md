@@ -6,7 +6,8 @@ IntelliMap is a hackathon app for team **IntelliMap**. Upload an architecture wo
 
 The product is **decision support**. Source facts, deterministic findings, and AI interpretations stay in separate layers. Unresolved foreign keys stay on the canvas. Relationships are never invented.
 
-**Run it:** see [RUNBOOK.md](RUNBOOK.md).
+**Hackathon briefing:** [information.md](information.md) (what it does) · [presentation.md](presentation.md) (pitch slides).  
+**Run it:** [RUNBOOK.md](RUNBOOK.md).
 
 ## Why this exists
 
