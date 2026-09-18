@@ -18,7 +18,7 @@ Check in **Command Prompt**:
 git --version
 ```
 
-### Python 3.11 or newer
+### Python 3.11–3.14
 
 1. Download: https://www.python.org/downloads/windows/  
 2. Run the installer.  
@@ -32,7 +32,7 @@ py -3 --version
 python --version
 ```
 
-`start.bat` uses **`python` on PATH** (then `py -3` if `python` is missing). It does **not** create a venv.
+`start.bat` uses **`python` on PATH** (then `py -3` if `python` is missing). It does **not** create a venv. Python **3.11–3.14** works (including 3.14.3).
 
 ### Node.js 18 or newer (20 LTS is fine)
 
@@ -140,15 +140,15 @@ Set-ExecutionPolicy -Scope CurrentUser RemoteSigned
 
 | What you see | Fix |
 | --- | --- |
-| `'python' is not recognized` | Reinstall Python 3.11/3.12 from python.org with **Add to PATH**, then a **new** Command Prompt. `'py' is not recognized` is fine if `python --version` works |
+| `'python' is not recognized` | Reinstall Python 3.11–3.14 from python.org with **Add to PATH**, then a **new** Command Prompt. `'py' is not recognized` is fine if `python --version` works |
 | `'node' is not recognized` | Reinstall Node LTS, new Command Prompt |
 | `npm` ENOENT at repo root | Always use `start-frontend.bat` (it `cd`s into `frontend`) |
 | Windows Defender SmartScreen on `start.bat` | More info → Run anyway (you built/cloned this repo) |
 | Port 3000 or 8000 already in use | Kill the PID with `taskkill` above, or close the old window |
 | API pill **offline** | Window 1 must be running first; check http://127.0.0.1:8000/api/health |
-| `error while generating package metadata` during pip | `start.bat` no longer uses a venv. Install **Python 3.11 or 3.12 from python.org** (tick Add to PATH), open a **new** Command Prompt, then `rmdir /s /q backend\.venv` and run `start.bat` again |
+| `error while generating package metadata` during pip | Old pins had no 3.14 wheels. `git pull`, then `rmdir /s /q backend\.venv` and run `start.bat` again |
 | venv / `activate.bat` fails | Expected with the old script. Current `start.bat` ignores `backend\.venv` and calls `python` on PATH |
-| `Microsoft Visual C++` / Rust errors on pip | Use python.org 3.11/3.12 so pip can take wheels instead of compiling |
+| `Microsoft Visual C++` / Rust errors on pip | `git pull` for 3.14-compatible pins, then retry `start.bat` |
 
 ## Screenshots for the README
 

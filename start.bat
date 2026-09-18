@@ -22,7 +22,7 @@ if not errorlevel 1 (
 
 echo.
 echo Python was not found on PATH.
-echo Install Python 3.11 or 3.12 from https://www.python.org/downloads/windows/
+echo Install Python 3.11-3.14 from https://www.python.org/downloads/windows/
 echo Tick "Add python.exe to PATH", then open a NEW Command Prompt.
 echo Do not use only the Microsoft Store Python stub.
 exit /b 1
@@ -60,7 +60,7 @@ if errorlevel 1 (
 if errorlevel 1 (
   echo.
   echo pip install failed. If you saw "error while generating package metadata":
-  echo   1. Install Python 3.11 or 3.12 from python.org ^(not Microsoft Store^)
+  echo   1. git pull so requirements.txt has Python 3.14 wheels ^(pydantic 2.13+^)
   echo   2. Tick Add python.exe to PATH, open a NEW Command Prompt
   echo   3. rmdir /s /q backend\.venv
   echo   4. Run start.bat again

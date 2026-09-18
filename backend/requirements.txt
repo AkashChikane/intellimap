@@ -1,12 +1,12 @@
-fastapi==0.115.6
+fastapi==0.141.1
 # No [standard] extra: on Windows it pulls watchfiles/httptools (Rust) and
 # pip then fails with "error while generating package metadata" when no wheel exists.
-uvicorn==0.34.0
-python-multipart==0.0.20
+uvicorn==0.53.0
+python-multipart==0.0.32
 openpyxl==3.1.5
-networkx==3.4.2
-pydantic==2.10.4
-python-dotenv==1.0.1
+networkx==3.6.1
+pydantic==2.13.5
+python-dotenv==1.2.3
 google-genai==1.14.0
 openai==1.70.0
 httpx==0.28.1
