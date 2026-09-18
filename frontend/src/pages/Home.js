@@ -267,7 +267,12 @@ export default function Home() {
                   onChange={(e) => onFile(e.target.files[0])}
                 />
               </label>
-              <button className="btn btn-ghost" disabled={busy} onClick={onSample}>
+              <button
+                className="btn btn-ghost"
+                data-testid="load-sample"
+                disabled={busy}
+                onClick={onSample}
+              >
                 {busy ? t("ingesting") : t("loadSample")}
               </button>
             </div>
@@ -342,7 +347,7 @@ function WorkbookStep({
   }
 
   return (
-    <div className="stage workbook-stage">
+    <div className="stage workbook-stage" data-testid="workbook-stage">
       <div className="workbook-intro">
         <div>
           <div className="kicker">{t("workbook")}</div>
@@ -442,7 +447,12 @@ function WorkbookStep({
       </div>
 
       <div className="row workbook-actions">
-        <button className="btn btn-steel" disabled={busy || includedCount === 0} onClick={onContinue}>
+        <button
+          className="btn btn-steel"
+          data-testid="continue-review"
+          disabled={busy || includedCount === 0}
+          onClick={onContinue}
+        >
           {busy ? t("updating") : t("reviewFindingsSheets", { n: includedCount })}
         </button>
         {omitted.includes("Applications") && (
@@ -473,7 +483,7 @@ function ReviewStep({
   const { t } = useI18n();
   const counts = summary.finding_counts || {};
   return (
-    <div className="stage review-stage">
+    <div className="stage review-stage" data-testid="review-stage">
       <div className="review-intro">
         <div>
           <div className="kicker">{t("review")}</div>
@@ -526,7 +536,7 @@ function ReviewStep({
         <button className="btn btn-ghost" disabled={busy} onClick={onDownload}>
           {t("downloadFixedExcel")}
         </button>
-        <button className="btn btn-steel" onClick={onExplore}>
+        <button className="btn btn-steel" data-testid="open-explorer" onClick={onExplore}>
           {t("openExplorer")}
         </button>
       </div>

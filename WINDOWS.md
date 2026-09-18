@@ -149,6 +149,18 @@ Set-ExecutionPolicy -Scope CurrentUser RemoteSigned
 | venv create fails | Install the **Windows installer** of Python, not the Store stub only |
 | `Microsoft Visual C++` errors on pip | Unusual for these wheels; update pip: `backend\.venv\Scripts\python -m pip install --upgrade pip` |
 
+## Screenshots for the README
+
+After the API and UI are running, capture the gallery used in README.md:
+
+```bat
+capture-screenshots.bat
+```
+
+That writes PNGs to `docs\screenshots\` and a paste-ready block in `docs\screenshots\README-SNIPPET.md`. The script does **not** edit README.md.
+
+Requires Node on PATH. First run installs Playwright Chromium under `scripts\`.
+
 ## Layout reminder
 
 ```

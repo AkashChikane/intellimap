@@ -9,6 +9,7 @@ export default function ThemeToggle() {
     <button
       type="button"
       className="theme-toggle"
+      data-testid="theme-toggle"
       onClick={toggle}
       aria-label={next === "dark" ? t("themeToDark") : t("themeToLight")}
       title={next === "dark" ? t("themeToDark") : t("themeToLight")}

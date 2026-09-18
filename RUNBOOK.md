@@ -207,6 +207,16 @@ If the UI shows **API offline**, the proxy cannot reach :8000. Start `./start.sh
 | Windows `python` not found | Install Python 3.11+ and tick “Add to PATH”, or use `py -3` |
 | Sample xlsx missing | `python backend/generate_sample.py` |
 
+## README screenshots (Windows)
+
+With both servers running:
+
+```bat
+capture-screenshots.bat
+```
+
+Output: `docs/screenshots/*.png` plus `docs/screenshots/README-SNIPPET.md` to paste into README.md later. The script does not modify README.md.
+
 ## What not to do
 
 - Do not commit `.env` or API keys.

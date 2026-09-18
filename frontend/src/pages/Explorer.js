@@ -445,7 +445,7 @@ export default function Explorer({ runId }) {
     .join(" ");
 
   return (
-    <div className={explorerClass}>
+    <div className={explorerClass} data-testid="explorer">
       <div className="toolbar">
         {!showToolbar ? (
           <button
@@ -461,6 +461,7 @@ export default function Explorer({ runId }) {
         <button
           type="button"
           className={`chip-toggle ${showFindings ? "is-on" : ""}`}
+          data-testid="toggle-findings"
           aria-expanded={showFindings}
           onClick={() => setShowFindings((v) => !v)}
         >
@@ -470,6 +471,7 @@ export default function Explorer({ runId }) {
         <button
           type="button"
           className={`chip-toggle ${showInspector ? "is-on" : ""}`}
+          data-testid="toggle-assistant"
           aria-expanded={showInspector}
           onClick={() => setShowInspector((v) => !v)}
         >
@@ -523,7 +525,12 @@ export default function Explorer({ runId }) {
           <option value="paper">{t("svgPaper")}</option>
           <option value="gray">{t("svgGray")}</option>
         </select>
-        <button type="button" className="btn btn-ghost" onClick={() => setSpotlightOpen(true)}>
+        <button
+          type="button"
+          className="btn btn-ghost"
+          data-testid="open-find"
+          onClick={() => setSpotlightOpen(true)}
+        >
           {t("find")} {typeof navigator !== "undefined" && /Mac/i.test(navigator.platform || "") ? "⌘K" : "Ctrl+K"}
         </button>
         <button

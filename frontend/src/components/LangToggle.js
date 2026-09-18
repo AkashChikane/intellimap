@@ -6,6 +6,7 @@ export default function LangToggle() {
     <button
       type="button"
       className="lang-toggle"
+      data-testid="lang-toggle"
       onClick={toggle}
       aria-label={t("langAria")}
       title={t("langAria")}

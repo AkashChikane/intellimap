@@ -16,6 +16,7 @@ frontend/.env
 .playwright-mcp/
 screenshots/
 *.png
+!docs/screenshots/*.png
 *.yml
 !frontend/package.json
 !frontend/public/**

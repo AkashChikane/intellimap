@@ -32,6 +32,7 @@ export default function App() {
         </Link>
         <div className="topbar-actions">
           <span
+            data-testid="api-pill"
             className={`api-pill ${apiUp === true ? "is-up" : apiUp === false ? "is-down" : ""}`}
           >
             {apiUp === false ? t("apiOffline") : apiUp ? t("apiReady") : t("apiWait")}
