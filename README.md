@@ -78,7 +78,13 @@ cp .env.example .env   # add GEMINI_API_KEY (or switch LLM_PROVIDER=openai)
 
 Open http://localhost:3000 — **Load sample landscape**.
 
-Windows: `start.bat` then `start-frontend.bat`. Full setup, demo script, and troubleshooting: **[RUNBOOK.md](RUNBOOK.md)**.
+VW LLMaaS smoke test (lists models, sends `Hi`):
+
+```bash
+backend/.venv/bin/python backend/test_llm.py
+```
+
+**Windows:** follow **[WINDOWS.md](WINDOWS.md)** (`start.bat` then `start-frontend.bat`). Operator notes and demo script: **[RUNBOOK.md](RUNBOOK.md)**.
 
 API docs while running: http://127.0.0.1:8000/docs
 

@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { searchFrame } from "../api";
+import { useI18n } from "../i18n";
 
 function matchNodes(nodes, query) {
   const q = (query || "").trim().toLowerCase();
@@ -48,6 +49,7 @@ export default function Spotlight({
   const [error, setError] = useState("");
   const [active, setActive] = useState(0);
   const inputRef = useRef(null);
+  const { t } = useI18n();
 
   useEffect(() => {
     if (!open) return;
@@ -136,7 +138,7 @@ export default function Spotlight({
         className="spotlight"
         role="dialog"
         aria-modal="true"
-        aria-label="Find in diagram"
+        aria-label={t("findDialog")}
         onMouseDown={(e) => e.stopPropagation()}
       >
         <div className="spotlight-bar">
@@ -145,9 +147,9 @@ export default function Spotlight({
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             onKeyDown={onKey}
-            placeholder={mode === "ai" ? "Semantic search this frame…" : "Find an application, process, or ID…"}
+            placeholder={mode === "ai" ? t("findAiPlaceholder") : t("findPlaceholder")}
           />
-          <button type="button" className="spotlight-x" onClick={onClose} aria-label="Close find">
+          <button type="button" className="spotlight-x" onClick={onClose} aria-label={t("closeFind")}>
             ×
           </button>
         </div>
@@ -157,18 +159,18 @@ export default function Spotlight({
             className={`chip-toggle ${mode === "text" ? "is-on" : ""}`}
             onClick={() => setMode("text")}
           >
-            Text
+            {t("text")}
           </button>
           <button
             type="button"
             className={`chip-toggle ${mode === "ai" ? "is-on" : ""}`}
             disabled={!aiReady}
             onClick={() => aiReady && setMode("ai")}
-            title={aiReady ? "Semantic search with AI" : "AI is not configured"}
+            title={aiReady ? t("aiSearchTitle") : t("aiNotConfigured")}
           >
-            AI
+            {t("ai")}
           </button>
-          <span className="muted">{busy ? "Searching…" : "Enter to jump · Esc to close"}</span>
+          <span className="muted">{busy ? t("searching") : t("findHint")}</span>
         </div>
         {error && <div className="notice spotlight-err">{error}</div>}
         <ul className="spotlight-list">
@@ -191,7 +193,7 @@ export default function Spotlight({
             </li>
           ))}
           {!busy && query.trim() && results.length === 0 && (
-            <li className="muted spotlight-empty">No matches in this frame.</li>
+            <li className="muted spotlight-empty">{t("noMatches")}</li>
           )}
         </ul>
       </div>

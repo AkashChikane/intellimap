@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useI18n } from "../i18n";
 
 function hashMatches(id) {
   if (typeof window === "undefined") return false;
@@ -14,6 +15,7 @@ export default function Collapsible({
   children,
   className = "",
 }) {
+  const { t } = useI18n();
   const [open, setOpen] = useState(() => hashMatches(id) || defaultOpen);
 
   useEffect(() => {
@@ -60,7 +62,7 @@ export default function Collapsible({
           {title}
           {typeof count === "number" && <span className="collapse-count">{count}</span>}
         </span>
-        <span className="collapse-action">{open ? "Hide" : "Show"}</span>
+        <span className="collapse-action">{open ? t("hide") : t("show")}</span>
       </a>
       {!open && summary ? <div className="collapse-summary">{summary}</div> : null}
       <div id={`${id}-panel`} hidden={!open} className="collapse-panel">

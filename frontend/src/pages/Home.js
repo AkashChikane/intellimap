@@ -11,22 +11,18 @@ import {
   reviewFix,
   scanReview,
 } from "../api";
-
-const STEPS = [
-  { id: "upload", label: "Upload" },
-  { id: "sheets", label: "Workbook" },
-  { id: "findings", label: "Review" },
-];
-
-const SEV_LABEL = {
-  blocker: "Breaks the graph",
-  risk: "Needs a decision",
-  quality: "Hygiene",
-  sensitive: "Classification flag",
-};
+import { useBusy } from "../busy";
+import { useI18n } from "../i18n";
 
 export default function Home() {
   const nav = useNavigate();
+  const { t } = useI18n();
+  const { run } = useBusy();
+  const STEPS = [
+    { id: "upload", label: t("upload") },
+    { id: "sheets", label: t("workbook") },
+    { id: "findings", label: t("review") },
+  ];
   const [step, setStep] = useState(0);
   const [over, setOver] = useState(false);
   const [busy, setBusy] = useState(false);
@@ -46,8 +42,10 @@ export default function Home() {
     setBusy(true);
     setError("");
     try {
-      const data = await ingestFile(file);
-      await afterIngest(data);
+      await run(t("loadingIngest"), async () => {
+        const data = await ingestFile(file);
+        await afterIngest(data);
+      });
     } catch (err) {
       setError(err.message);
     } finally {
@@ -59,8 +57,10 @@ export default function Home() {
     setBusy(true);
     setError("");
     try {
-      const data = await ingestSample();
-      await afterIngest(data);
+      await run(t("loadingSample"), async () => {
+        const data = await ingestSample();
+        await afterIngest(data);
+      });
     } catch (err) {
       setError(err.message);
     } finally {
@@ -101,10 +101,12 @@ export default function Home() {
     setBusy(true);
     setError("");
     try {
-      const data = await omitSheets(summary.run.id, omitted);
-      const review = await getReview(summary.run.id);
-      applyReview({ ...data, ...review }, review.findings);
-      setStep(2);
+      await run(t("loadingRebuild"), async () => {
+        const data = await omitSheets(summary.run.id, omitted);
+        const review = await getReview(summary.run.id);
+        applyReview({ ...data, ...review }, review.findings);
+        setStep(2);
+      });
     } catch (err) {
       setError(err.message);
     } finally {
@@ -113,9 +115,12 @@ export default function Home() {
   }
 
   async function onFix(fixId, status) {
+    setError("");
     try {
-      const data = await reviewFix(summary.run.id, fixId, status);
-      applyReview(data, data.findings);
+      await run(t("loadingFix"), async () => {
+        const data = await reviewFix(summary.run.id, fixId, status);
+        applyReview(data, data.findings);
+      });
     } catch (err) {
       setError(err.message);
     }
@@ -125,8 +130,10 @@ export default function Home() {
     setBusy(true);
     setError("");
     try {
-      const data = await acceptAllFixes(summary.run.id);
-      applyReview(data, data.findings);
+      await run(t("loadingAcceptAll"), async () => {
+        const data = await acceptAllFixes(summary.run.id);
+        applyReview(data, data.findings);
+      });
     } catch (err) {
       setError(err.message);
     } finally {
@@ -139,12 +146,14 @@ export default function Home() {
     setError("");
     setAiNote("");
     try {
-      const data = await scanReview(summary.run.id);
-      applyReview(data, data.findings);
-      setAiNote(
-        data.disclaimer ||
-          `${(data.created || []).length} AI suggestion(s) added. Accept only what matches the workbook.`
-      );
+      await run(t("loadingScan"), async () => {
+        const data = await scanReview(summary.run.id);
+        applyReview(data, data.findings);
+        setAiNote(
+          data.disclaimer ||
+            `${(data.created || []).length} AI suggestion(s) added. Accept only what matches the workbook.`
+        );
+      });
     } catch (err) {
       setError(err.message);
     } finally {
@@ -156,7 +165,7 @@ export default function Home() {
     setBusy(true);
     setError("");
     try {
-      await downloadWorkbook(summary.run.id);
+      await run(t("loadingDownload"), () => downloadWorkbook(summary.run.id));
     } catch (err) {
       setError(err.message);
     } finally {
@@ -207,7 +216,7 @@ export default function Home() {
               setStep(i);
             }}
           >
-            Step {i + 1}
+            {t("step")} {i + 1}
             <b>{s.label}</b>
           </button>
         ))}
@@ -222,17 +231,13 @@ export default function Home() {
       {step === 0 && (
         <div className="hero">
           <div>
-            <div className="kicker">Workbook → review → scoped diagram</div>
-            <h1>See the landscape that matters for one decision.</h1>
-            <p className="lead">
-              Upload the architecture workbook, confirm which sheets belong in this run, then
-              review findings with a clear fix for each one. Accepted fixes write back into a
-              downloadable Excel file.
-            </p>
+            <div className="kicker">{t("heroKicker")}</div>
+            <h1>{t("heroTitle")}</h1>
+            <p className="lead">{t("heroLead")}</p>
             <ul className="hero-points">
-              <li>Sheets can be omitted before validation is locked in.</li>
-              <li>Unresolved keys stay visible — they are never silently dropped.</li>
-              <li>AI suggestions appear only in review, and only if you accept them.</li>
+              <li>{t("heroPoint1")}</li>
+              <li>{t("heroPoint2")}</li>
+              <li>{t("heroPoint3")}</li>
             </ul>
           </div>
           <div
@@ -248,12 +253,12 @@ export default function Home() {
               onFile(e.dataTransfer.files[0]);
             }}
           >
-            <div className="kicker">Start here</div>
-            <h2>Drop an .xlsx landscape</h2>
-            <p>Seven expected sheets. ApplicationID is the hub. You can omit any sheet on the next step.</p>
+            <div className="kicker">{t("startHere")}</div>
+            <h2>{t("dropTitle")}</h2>
+            <p>{t("dropBody")}</p>
             <div className="row">
               <label className="btn btn-primary">
-                Choose workbook
+                {t("chooseWorkbook")}
                 <input
                   type="file"
                   accept=".xlsx,.xlsm"
@@ -263,7 +268,7 @@ export default function Home() {
                 />
               </label>
               <button className="btn btn-ghost" disabled={busy} onClick={onSample}>
-                {busy ? "Ingesting…" : "Load sample landscape"}
+                {busy ? t("ingesting") : t("loadSample")}
               </button>
             </div>
           </div>
@@ -324,6 +329,7 @@ function WorkbookStep({
   busy,
   onContinue,
 }) {
+  const { t } = useI18n();
   const current = sheets.find((s) => s.sheet === activeSheet) || sheets[0];
   const isOmitted = omitted.includes(activeSheet);
   const headers = preview?.headers || [];
@@ -339,15 +345,12 @@ function WorkbookStep({
     <div className="stage workbook-stage">
       <div className="workbook-intro">
         <div>
-          <div className="kicker">Workbook</div>
+          <div className="kicker">{t("workbook")}</div>
           <h2>{summary.run.filename}</h2>
-          <p className="muted">
-            This is the file as ingested. Include a sheet to use it in the landscape, or omit it
-            so it is skipped in validation, the graph, and the downloaded workbook.
-          </p>
+          <p className="muted">{t("workbookIntro")}</p>
         </div>
         <div className="workbook-meta">
-          {includedCount} of {sheets.length} sheets included
+          {t("sheetsIncluded", { n: includedCount, total: sheets.length })}
         </div>
       </div>
 
@@ -367,7 +370,7 @@ function WorkbookStep({
                 onClick={() => setActiveSheet(s.sheet)}
               >
                 {s.sheet}
-                <small>{skipped ? "omitted" : `${s.row_count} rows`}</small>
+                <small>{skipped ? t("omitted") : t("rows", { n: s.row_count })}</small>
               </button>
             );
           })}
@@ -388,25 +391,25 @@ function WorkbookStep({
                   onChange={(e) => toggleOmit(current.sheet, !e.target.checked)}
                 />
                 {current.status === "missing"
-                  ? "Not in file"
+                  ? t("notInFile")
                   : isOmitted
-                    ? "Omitted from this run"
-                    : "Include in this run"}
+                    ? t("omittedFromRun")
+                    : t("includeInRun")}
               </label>
             </div>
             <div className="sheet-stats">
               <span className={`status ${current.status}`}>{current.status}</span>
-              {current.workbook_name && <span>File tab “{current.workbook_name}”</span>}
-              <span>{current.row_count} data rows</span>
+              {current.workbook_name && <span>{t("fileTab", { name: current.workbook_name })}</span>}
+              <span>{t("dataRows", { n: current.row_count })}</span>
               {current.missing_fields?.length > 0 && (
-                <span>Unmapped: {current.missing_fields.join(", ")}</span>
+                <span>{t("unmapped", { list: current.missing_fields.join(", ") })}</span>
               )}
               {current.unmapped_headers?.length > 0 && (
-                <span>Ignored headers: {current.unmapped_headers.join(", ")}</span>
+                <span>{t("ignoredHeaders", { list: current.unmapped_headers.join(", ") })}</span>
               )}
             </div>
             {current.status === "missing" ? (
-              <p className="muted empty-sheet">This expected sheet was not in the workbook.</p>
+              <p className="muted empty-sheet">{t("sheetMissing")}</p>
             ) : (
               <div className="sheet-scroll">
                 <table className="sheet-table">
@@ -430,7 +433,7 @@ function WorkbookStep({
                   </tbody>
                 </table>
                 {preview?.truncated && (
-                  <p className="muted sheet-more">Showing the first {preview.rows.length} rows.</p>
+                  <p className="muted sheet-more">{t("showingFirst", { n: preview.rows.length })}</p>
                 )}
               </div>
             )}
@@ -440,10 +443,10 @@ function WorkbookStep({
 
       <div className="row workbook-actions">
         <button className="btn btn-steel" disabled={busy || includedCount === 0} onClick={onContinue}>
-          {busy ? "Updating…" : `Review findings · ${includedCount} sheets`}
+          {busy ? t("updating") : t("reviewFindingsSheets", { n: includedCount })}
         </button>
         {omitted.includes("Applications") && (
-          <span className="muted">Omitting Applications will leave the graph without a hub.</span>
+          <span className="muted">{t("omitAppsWarn")}</span>
         )}
       </div>
     </div>
@@ -467,42 +470,39 @@ function ReviewStep({
   onDownload,
   onExplore,
 }) {
+  const { t } = useI18n();
   const counts = summary.finding_counts || {};
   return (
     <div className="stage review-stage">
       <div className="review-intro">
         <div>
-          <div className="kicker">Review</div>
-          <h2>What these findings are</h2>
-          <p>
-            Each card is a check on the workbook you just confirmed. It is not a new
-            relationship. Blockers break IDs in the graph. Risks need a human decision. Quality
-            is hygiene. Sensitive means Confidential, PII, or PCI — a flag, not a defect.
-          </p>
+          <div className="kicker">{t("review")}</div>
+          <h2>{t("reviewTitle")}</h2>
+          <p>{t("reviewLead")}</p>
         </div>
         <div className="review-counts">
           <b>{openCount}</b>
-          <span>open</span>
+          <span>{t("open")}</span>
         </div>
       </div>
 
       <div className="toolbar findings-bar">
         <input
           className="search"
-          placeholder="Search title, ID, or meaning"
+          placeholder={t("searchFindings")}
           value={filter}
           onChange={(e) => setFilter(e.target.value)}
         />
         <div className="lane-pills">
           {[
-            ["open", `Open · ${openCount}`],
-            ["autofix", "Autofixable"],
-            ["ai", "AI"],
-            ["blocker", `Blockers · ${counts.blocker || 0}`],
-            ["risk", `Risks · ${counts.risk || 0}`],
-            ["quality", `Quality · ${counts.quality || 0}`],
-            ["sensitive", `Sensitive · ${counts.sensitive || 0}`],
-            ["resolved", "Resolved"],
+            ["open", t("laneOpen", { n: openCount })],
+            ["autofix", t("laneAutofix")],
+            ["ai", t("laneAi")],
+            ["blocker", t("laneBlockers", { n: counts.blocker || 0 })],
+            ["risk", t("laneRisks", { n: counts.risk || 0 })],
+            ["quality", t("laneQuality", { n: counts.quality || 0 })],
+            ["sensitive", t("laneSensitive", { n: counts.sensitive || 0 })],
+            ["resolved", t("laneResolved")],
           ].map(([id, label]) => (
             <button
               key={id}
@@ -518,22 +518,22 @@ function ReviewStep({
 
       <div className="row review-actions">
         <button className="btn btn-ghost" disabled={aiBusy || busy} onClick={onScan}>
-          {aiBusy ? "Scanning…" : "Scan with AI"}
+          {aiBusy ? t("scanning") : t("scanAi")}
         </button>
         <button className="btn btn-ghost" disabled={busy} onClick={onAcceptAll}>
-          Accept all autofixes
+          {t("acceptAll")}
         </button>
         <button className="btn btn-ghost" disabled={busy} onClick={onDownload}>
-          Download fixed Excel
+          {t("downloadFixedExcel")}
         </button>
         <button className="btn btn-steel" onClick={onExplore}>
-          Open context explorer
+          {t("openExplorer")}
         </button>
       </div>
       {aiNote && <p className="ok-note">{aiNote}</p>}
 
       <div className="finding-list">
-        {findings.length === 0 && <p className="muted">Nothing in this filter.</p>}
+        {findings.length === 0 && <p className="muted">{t("nothingFilter")}</p>}
         {findings.map((f) => (
           <FindingCard key={f.id} finding={f} onFix={onFix} />
         ))}
@@ -543,26 +543,30 @@ function ReviewStep({
 }
 
 function FindingCard({ finding, onFix }) {
+  const { t } = useI18n();
   const proposed = (finding.fixes || []).filter((fx) => fx.status === "proposed");
   const applied = (finding.fixes || []).some((fx) => fx.status === "applied" || fx.status === "accepted");
+  const sevKey = { blocker: "sevBlocker", risk: "sevRisk", quality: "sevQuality", sensitive: "sevSensitive" }[
+    finding.severity
+  ];
   return (
     <article className={`finding-card sev-${finding.severity} ${finding.status === "resolved" ? "is-resolved" : ""}`}>
       <header>
         <span className={`sev-pill sev-${finding.severity}`}>{finding.severity}</span>
-        <span className="muted">{SEV_LABEL[finding.severity]}</span>
-        {finding.autofixable && <span className="tag">Autofixable</span>}
-        {proposed.some((fx) => fx.source === "ai") && <span className="tag tag-ai">AI</span>}
-        {finding.status === "resolved" && <span className="tag tag-ok">Resolved</span>}
+        <span className="muted">{sevKey ? t(sevKey) : finding.severity}</span>
+        {finding.autofixable && <span className="tag">{t("autofixable")}</span>}
+        {proposed.some((fx) => fx.source === "ai") && <span className="tag tag-ai">{t("ai")}</span>}
+        {finding.status === "resolved" && <span className="tag tag-ok">{t("resolved")}</span>}
       </header>
       <h3>{finding.title}</h3>
       <p className="finding-desc">{finding.description}</p>
       <dl className="finding-guide">
         <div>
-          <dt>What this means</dt>
+          <dt>{t("whatThisMeans")}</dt>
           <dd>{finding.meaning}</dd>
         </div>
         <div>
-          <dt>How to fix</dt>
+          <dt>{t("howToFix")}</dt>
           <dd>{finding.how_to_fix}</dd>
         </div>
       </dl>
@@ -575,7 +579,7 @@ function FindingCard({ finding, onFix }) {
       {proposed.map((fx) => (
         <div className={`fix-box ${fx.source === "ai" ? "is-ai" : ""}`} key={fx.id}>
           <div className="fix-head">
-            <strong>{fx.source === "ai" ? "AI suggestion" : "Suggested fix"}</strong>
+            <strong>{fx.source === "ai" ? t("aiSuggestion") : t("suggestedFix")}</strong>
             <span>{fx.title}</span>
           </div>
           <p>{fx.rationale}</p>
@@ -583,19 +587,19 @@ function FindingCard({ finding, onFix }) {
           <div className="row">
             {fx.autofixable && fx.patch?.action !== "none" ? (
               <button className="btn btn-ok" onClick={() => onFix(fx.id, "accepted")}>
-                Accept fix
+                {t("acceptFix")}
               </button>
             ) : (
-              <span className="muted">No automatic edit — use this as guidance.</span>
+              <span className="muted">{t("noAutoEdit")}</span>
             )}
             <button className="btn btn-danger" onClick={() => onFix(fx.id, "rejected")}>
-              Reject
+              {t("reject")}
             </button>
           </div>
         </div>
       ))}
       {applied && proposed.length === 0 && (
-        <p className="muted">This fix was applied to the working workbook.</p>
+        <p className="muted">{t("fixApplied")}</p>
       )}
     </article>
   );

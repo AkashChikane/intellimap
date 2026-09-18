@@ -23,14 +23,18 @@ import Assistant from "../components/Assistant";
 import Collapsible from "../components/Collapsible";
 import Spotlight from "../components/Spotlight";
 import { nodeTypes } from "../components/nodes";
+import { useBusy } from "../busy";
+import { useI18n } from "../i18n";
 import { useTheme } from "../theme";
 
-const FRAME_TYPES = [
-  { id: "application", label: "Application" },
-  { id: "business_process", label: "Business process" },
-  { id: "domain", label: "Domain" },
-  { id: "information_object", label: "Information object" },
-];
+function frameTypes(t) {
+  return [
+    { id: "application", label: t("frameApplication") },
+    { id: "business_process", label: t("frameProcess") },
+    { id: "domain", label: t("frameDomain") },
+    { id: "information_object", label: t("frameInfo") },
+  ];
+}
 
 function styleEdges(edges) {
   return (edges || []).map((e) => {
@@ -75,8 +79,9 @@ function findingsForNode(findings, node) {
 }
 
 function FindingCards({ findings, onPick }) {
+  const { t } = useI18n();
   if (!findings.length) {
-    return <p className="muted">No findings in this scope.</p>;
+    return <p className="muted">{t("noFindingsScope")}</p>;
   }
   return (
     <div className="filter-list">
@@ -98,6 +103,9 @@ function FindingCards({ findings, onPick }) {
 export default function Explorer({ runId }) {
   const loc = useLocation();
   const { mode } = useTheme();
+  const { t } = useI18n();
+  const { run: runBusy } = useBusy();
+  const FRAME_TYPES = frameTypes(t);
   const [run, setRun] = useState(null);
   const [frameType, setFrameType] = useState("application");
   const [frameId, setFrameId] = useState("");
@@ -124,6 +132,7 @@ export default function Explorer({ runId }) {
   const [highlightIds, setHighlightIds] = useState([]);
   const [chatBusy, setChatBusy] = useState(false);
   const [aiReady, setAiReady] = useState(false);
+  const [showNodeDetails, setShowNodeDetails] = useState(false);
   const flowRef = useRef(null);
   const pendingFocusRef = useRef(null);
 
@@ -163,21 +172,23 @@ export default function Explorer({ runId }) {
     setBusy(true);
     setError("");
     try {
-      const data = await getContext(runId, {
-        frame_type: frameType,
-        frame_id: frameId,
-        hops,
-        view,
-        hide_unresolved: hideUnresolved,
+      await runBusy(t("loadingGraph"), async () => {
+        const data = await getContext(runId, {
+          frame_type: frameType,
+          frame_id: frameId,
+          hops,
+          view,
+          hide_unresolved: hideUnresolved,
+        });
+        setGraph(data);
+        setSelected(null);
       });
-      setGraph(data);
-      setSelected(null);
     } catch (err) {
       setError(err.message);
     } finally {
       setBusy(false);
     }
-  }, [runId, frameType, frameId, hops, view, hideUnresolved]);
+  }, [runId, frameType, frameId, hops, view, hideUnresolved, runBusy, t]);
 
   useEffect(() => {
     load();
@@ -262,12 +273,14 @@ export default function Explorer({ runId }) {
     setInsightBusy(true);
     setError("");
     try {
-      const data = await generateInsights(runId, {
-        frame_type: frameType,
-        frame_id: frameId,
-        hops,
+      await runBusy(t("loadingInsights"), async () => {
+        const data = await generateInsights(runId, {
+          frame_type: frameType,
+          frame_id: frameId,
+          hops,
+        });
+        setGraph((g) => ({ ...g, insights: data.items }));
       });
-      setGraph((g) => ({ ...g, insights: data.items }));
     } catch (err) {
       setError(err.message);
     } finally {
@@ -341,23 +354,25 @@ export default function Explorer({ runId }) {
     setDraft("");
     setChatBusy(true);
     try {
-      const data = await chat(runId, {
-        frame_type: frameType,
-        frame_id: frameId,
-        hops,
-        hide_unresolved: hideUnresolved,
-        messages: next.map((m) => ({ role: m.role, content: m.content })),
-        dropped: chips,
+      await runBusy(t("loadingChat"), async () => {
+        const data = await chat(runId, {
+          frame_type: frameType,
+          frame_id: frameId,
+          hops,
+          hide_unresolved: hideUnresolved,
+          messages: next.map((m) => ({ role: m.role, content: m.content })),
+          dropped: chips,
+        });
+        const reply = {
+          role: "assistant",
+          content: data.answer || "",
+          actions: data.actions || [],
+          cards: data.cards || [],
+        };
+        setMessages([...next, reply]);
+        const auto = (data.actions || []).find((a) => a.type === "focus_node" || a.type === "highlight_nodes");
+        if (auto) runAction(auto);
       });
-      const reply = {
-        role: "assistant",
-        content: data.answer || "",
-        actions: data.actions || [],
-        cards: data.cards || [],
-      };
-      setMessages([...next, reply]);
-      const auto = (data.actions || []).find((a) => a.type === "focus_node" || a.type === "highlight_nodes");
-      if (auto) runAction(auto);
     } catch (err) {
       setMessages([...next, { role: "assistant", content: err.message }]);
     } finally {
@@ -369,7 +384,7 @@ export default function Explorer({ runId }) {
     setExcelBusy(true);
     setError("");
     try {
-      await downloadWorkbook(runId);
+      await runBusy(t("loadingDownload"), () => downloadWorkbook(runId));
     } catch (err) {
       setError(err.message);
     } finally {
@@ -412,7 +427,7 @@ export default function Explorer({ runId }) {
     const ext = kind === "summary" ? "md" : kind;
     const fallback = `intellimap-${frameType}-${frameId}.${ext}`;
     try {
-      await downloadExport(runId, kind, params, fallback);
+      await runBusy(t("loadingExport"), () => downloadExport(runId, kind, params, fallback));
     } catch (err) {
       setError(err.message);
     } finally {
@@ -438,7 +453,7 @@ export default function Explorer({ runId }) {
           aria-expanded={showFindings}
           onClick={() => setShowFindings((v) => !v)}
         >
-          {showFindings ? "Hide findings" : "Show findings"}
+          {showFindings ? t("hideFindings") : t("showFindings")}
           {findings.length ? ` · ${findings.length}` : ""}
         </button>
         <button
@@ -447,7 +462,7 @@ export default function Explorer({ runId }) {
           aria-expanded={showInspector}
           onClick={() => setShowInspector((v) => !v)}
         >
-          {showInspector ? "Hide assistant" : "Show assistant"}
+          {showInspector ? t("hideAssistant") : t("showAssistant")}
         </button>
         <select
           className="ctrl"
@@ -465,7 +480,7 @@ export default function Explorer({ runId }) {
         </select>
         <input
           className="search"
-          placeholder="Search this frame type"
+          placeholder={t("searchFrame")}
           value={query}
           onChange={(e) => setQuery(e.target.value)}
         />
@@ -477,28 +492,28 @@ export default function Explorer({ runId }) {
           ))}
         </select>
         <select className="ctrl" value={hops} onChange={(e) => setHops(Number(e.target.value))}>
-          <option value={1}>1 hop</option>
-          <option value={2}>2 hops</option>
+          <option value={1}>{t("hop1")}</option>
+          <option value={2}>{t("hop2")}</option>
         </select>
         <select className="ctrl" value={view} onChange={(e) => setView(e.target.value)}>
-          <option value="deterministic">Deterministic</option>
-          <option value="ai_enhanced">AI-enhanced</option>
-          <option value="ai_abstract">AI abstract</option>
+          <option value="deterministic">{t("viewDet")}</option>
+          <option value="ai_enhanced">{t("viewEnhanced")}</option>
+          <option value="ai_abstract">{t("viewAbstract")}</option>
         </select>
         <button
           type="button"
           className={`chip-toggle ${hideUnresolved ? "is-on" : ""}`}
           onClick={() => setHideUnresolved((v) => !v)}
         >
-          Hide unresolved
+          {t("hideUnresolved")}
         </button>
         <select className="ctrl" value={theme} onChange={(e) => setTheme(e.target.value)}>
-          <option value="navy">SVG navy</option>
-          <option value="paper">SVG paper</option>
-          <option value="gray">SVG gray</option>
+          <option value="navy">{t("svgNavy")}</option>
+          <option value="paper">{t("svgPaper")}</option>
+          <option value="gray">{t("svgGray")}</option>
         </select>
         <button type="button" className="btn btn-ghost" onClick={() => setSpotlightOpen(true)}>
-          Find {typeof navigator !== "undefined" && /Mac/i.test(navigator.platform || "") ? "⌘K" : "Ctrl+K"}
+          {t("find")} {typeof navigator !== "undefined" && /Mac/i.test(navigator.platform || "") ? "⌘K" : "Ctrl+K"}
         </button>
         <button
           type="button"
@@ -506,7 +521,7 @@ export default function Explorer({ runId }) {
           disabled={excelBusy}
           onClick={onDownloadExcel}
         >
-          {excelBusy ? "Downloading…" : "Download Excel"}
+          {excelBusy ? t("downloading") : t("downloadExcel")}
         </button>
         <button
           type="button"
@@ -514,7 +529,7 @@ export default function Explorer({ runId }) {
           disabled={exportBusy || !frameId}
           onClick={() => onExport("svg")}
         >
-          {exportBusy ? "Exporting…" : "Export SVG"}
+          {exportBusy ? t("exporting") : t("exportSvg")}
         </button>
         <button
           type="button"
@@ -522,7 +537,7 @@ export default function Explorer({ runId }) {
           disabled={exportBusy || !frameId}
           onClick={() => onExport("json")}
         >
-          JSON
+          {t("json")}
         </button>
         <button
           type="button"
@@ -530,45 +545,75 @@ export default function Explorer({ runId }) {
           disabled={exportBusy || !frameId}
           onClick={() => onExport("summary")}
         >
-          Summary
+          {t("summary")}
         </button>
-        {busy && <span className="muted">Loading…</span>}
+        {busy && <span className="muted">{t("loading")}</span>}
       </div>
 
       <aside className="side">
         <div className="side-head">
-          <span>Findings</span>
+          <span>{t("findings")}</span>
           <button type="button" className="panel-hide" onClick={() => setShowFindings(false)}>
-            Hide
+            {t("hide")}
           </button>
         </div>
         <div className="side-body">
           {error && <div className="notice">{error}</div>}
           <div className="frame-card">
             <div className="kicker">{FRAME_TYPES.find((t) => t.id === frameType)?.label}</div>
-            <h3>{selectedFrame?.label || frameId || "Choose a frame"}</h3>
+            <h3>{selectedFrame?.label || frameId || t("chooseFrame")}</h3>
             <p className="muted">
-              {graph?.stats?.nodes ?? 0} nodes · {graph?.stats?.edges ?? 0} edges ·{" "}
-              {graph?.stats?.unresolved ?? 0} unresolved
+              {t("graphStats", {
+                nodes: graph?.stats?.nodes ?? 0,
+                edges: graph?.stats?.edges ?? 0,
+                unresolved: graph?.stats?.unresolved ?? 0,
+              })}
             </p>
             {run && (
               <p className="muted">
-                {run.run?.filename} · {run.finding_total} workbook findings
+                {t("workbookFindings", { file: run.run?.filename, n: run.finding_total })}
               </p>
             )}
           </div>
           <Collapsible
             id="frame-findings"
-            title="Findings in frame"
+            title={t("findingsInFrame")}
             count={findings.length}
             summary={
               findings.length
-                ? `${findings.length} hidden. Show to jump to a related application.`
-                : "No findings in this frame."
+                ? t("findingsHidden", { n: findings.length })
+                : t("noFindingsFrame")
             }
           >
             <FindingCards findings={findings} onPick={jumpToFinding} />
           </Collapsible>
+          <div className="insight-block">
+            <div className="kicker">{t("insightsTitle")}</div>
+            <p className="muted">{t("insightsLead")}</p>
+            <div className="row">
+              <button className="btn btn-steel" disabled={insightBusy} onClick={onInsights}>
+                {insightBusy ? t("generating") : t("generateInsights")}
+              </button>
+            </div>
+            {(insights || []).map((i) => (
+              <div className="finding" key={i.id}>
+                <h4>{i.title}</h4>
+                <p>{i.body}</p>
+                <div className="src">
+                  {i.status} · {i.confidence}
+                  {i.related_ids?.length ? ` · ${i.related_ids.join(", ")}` : ""}
+                </div>
+                <div className="row" style={{ marginTop: 8 }}>
+                  <button className="btn btn-ok" onClick={() => onReview(i.id, "accepted")}>
+                    {t("accept")}
+                  </button>
+                  <button className="btn btn-danger" onClick={() => onReview(i.id, "rejected")}>
+                    {t("reject")}
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
         </div>
       </aside>
 
@@ -581,7 +626,7 @@ export default function Explorer({ runId }) {
             aria-expanded={false}
             onClick={() => setShowFindings(true)}
           >
-            Show findings{findings.length ? ` · ${findings.length}` : ""}
+            {t("showFindings")}{findings.length ? ` · ${findings.length}` : ""}
           </button>
         )}
         {!showInspector && (
@@ -591,7 +636,7 @@ export default function Explorer({ runId }) {
             aria-expanded={false}
             onClick={() => setShowInspector(true)}
           >
-            Show assistant
+            {t("showAssistant")}
           </button>
         )}
         <ReactFlow
@@ -638,80 +683,70 @@ export default function Explorer({ runId }) {
 
       <aside className="rail">
         <div className="rail-head">
-          <span>Assistant</span>
+          <span>{t("assistant")}</span>
           <button type="button" className="panel-hide" onClick={() => setShowInspector(false)}>
-            Hide
+            {t("hide")}
           </button>
         </div>
         <div className="rail-body inspector">
-          {selected ? (
-            <>
-              <h3>{selected.data?.label || selected.id}</h3>
-              <dl>
-                <dt>ID</dt>
-                <dd>{selected.data?.id || selected.id}</dd>
-                <dt>Kind</dt>
-                <dd>{selected.data?.kind}</dd>
-                <dt>Source</dt>
-                <dd>
-                  {selected.data?.source_sheet
-                    ? `${selected.data.source_sheet} row ${selected.data.source_row}`
-                    : "not in Applications (unresolved)"}
-                </dd>
-                <dt>Owner</dt>
-                <dd>{selected.data?.owner || selected.data?.ownership?.application_owner || "—"}</dd>
-                <dt>Lifecycle</dt>
-                <dd>{selected.data?.lifecycle || "—"}</dd>
-                <dt>Domain</dt>
-                <dd>{selected.data?.domain || "—"}</dd>
-              </dl>
-              {selected.data?.ai_note && (
-                <p className="muted" style={{ marginTop: 10 }}>
-                  AI note: {selected.data.ai_note}
-                </p>
-              )}
-              <Collapsible
-                id="inspector-findings"
-                title="Findings"
-                count={nodeFindings.length}
-                summary={
-                  nodeFindings.length
-                    ? `${nodeFindings.length} hidden for this node.`
-                    : "No findings for this node."
-                }
-              >
-                <FindingCards findings={nodeFindings} onPick={jumpToFinding} />
-              </Collapsible>
-            </>
-          ) : (
-            <p className="muted">Select a node, press Find, or drop a node onto the assistant.</p>
-          )}
-
-          <div className="insight-block">
-            <div className="row">
-              <button className="btn btn-steel" disabled={insightBusy} onClick={onInsights}>
-                {insightBusy ? "Generating…" : "Generate AI insights"}
-              </button>
-            </div>
-            <p className="muted">Generated, not architecture ground truth.</p>
-            {(insights || []).map((i) => (
-              <div className="finding" key={i.id}>
-                <h4>{i.title}</h4>
-                <p>{i.body}</p>
-                <div className="src">
-                  {i.status} · {i.confidence}
-                  {i.related_ids?.length ? ` · ${i.related_ids.join(", ")}` : ""}
+          <div className="node-facts">
+            <button
+              type="button"
+              className={`collapse-toggle node-facts-toggle ${showNodeDetails ? "is-open" : ""}`}
+              aria-expanded={showNodeDetails}
+              onClick={() => setShowNodeDetails((v) => !v)}
+            >
+              <span className="collapse-title">
+                <span className="chevron" aria-hidden="true">
+                  ▸
+                </span>
+                {selected ? selected.data?.label || selected.id : t("nodeDetails")}
+              </span>
+              <span className="collapse-action">{showNodeDetails ? t("hide") : t("show")}</span>
+            </button>
+            {showNodeDetails &&
+              (selected ? (
+                <div className="node-facts-body">
+                  <h3>{selected.data?.label || selected.id}</h3>
+                  <dl>
+                    <dt>ID</dt>
+                    <dd>{selected.data?.id || selected.id}</dd>
+                    <dt>{t("kind")}</dt>
+                    <dd>{selected.data?.kind}</dd>
+                    <dt>{t("source")}</dt>
+                    <dd>
+                      {selected.data?.source_sheet
+                        ? `${selected.data.source_sheet} row ${selected.data.source_row}`
+                        : t("unresolvedSource")}
+                    </dd>
+                    <dt>{t("owner")}</dt>
+                    <dd>{selected.data?.owner || selected.data?.ownership?.application_owner || "—"}</dd>
+                    <dt>{t("lifecycle")}</dt>
+                    <dd>{selected.data?.lifecycle || "—"}</dd>
+                    <dt>{t("domain")}</dt>
+                    <dd>{selected.data?.domain || "—"}</dd>
+                  </dl>
+                  {selected.data?.ai_note && (
+                    <p className="muted" style={{ marginTop: 10 }}>
+                      {t("aiNote", { note: selected.data.ai_note })}
+                    </p>
+                  )}
+                  <Collapsible
+                    id="inspector-findings"
+                    title={t("nodeFindings")}
+                    count={nodeFindings.length}
+                    summary={
+                      nodeFindings.length
+                        ? t("nodeFindingsHidden", { n: nodeFindings.length })
+                        : t("noFindingsNode")
+                    }
+                  >
+                    <FindingCards findings={nodeFindings} onPick={jumpToFinding} />
+                  </Collapsible>
                 </div>
-                <div className="row" style={{ marginTop: 8 }}>
-                  <button className="btn btn-ok" onClick={() => onReview(i.id, "accepted")}>
-                    Accept
-                  </button>
-                  <button className="btn btn-danger" onClick={() => onReview(i.id, "rejected")}>
-                    Reject
-                  </button>
-                </div>
-              </div>
-            ))}
+              ) : (
+                <p className="muted node-facts-body">{t("inspectorFacts")}</p>
+              ))}
           </div>
 
           <Assistant

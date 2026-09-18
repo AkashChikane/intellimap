@@ -57,21 +57,21 @@ Open http://localhost:3000. Health should show `llm_ready: true` when the key is
 
 ## First-time setup (Windows)
 
+Full walkthrough (Git, Python PATH, Node, ports, typical errors): **[WINDOWS.md](WINDOWS.md)**.
+
+Short version — Command Prompt:
+
 ```bat
 git clone https://github.com/AkashChikane/intellimap.git
 cd intellimap
 copy .env.example .env
 ```
 
-Fill `.env` as above.
-
-Command Prompt 1:
+Fill `.env`, then two windows:
 
 ```bat
 start.bat
 ```
-
-Command Prompt 2:
 
 ```bat
 start-frontend.bat
@@ -88,22 +88,39 @@ Never commit `.env`. Copy from `.env.example`.
 | `LLM_PROVIDER` | `gemini` | `gemini` or `openai` |
 | `GEMINI_API_KEY` | empty | Google AI Studio key |
 | `GEMINI_MODEL` | `gemini-2.5-flash-lite` | Cheaper Flash-Lite; change if the model is retired |
-| `OPENAI_API_KEY` | empty | Org or OpenAI key |
-| `OPENAI_BASE_URL` | `https://api.openai.com/v1` | Org OpenAI-compatible base URL |
-| `OPENAI_MODEL` | `gpt-4o-mini` | Model id on that endpoint |
+| `OPENAI_API_KEY` | empty | Static key if the gateway does not use Cloud IDP |
+| `OPENAI_BASE_URL` | `https://llmapi.ai.vwgroup.com` | OpenAI-compatible base URL (VW LLMaaS or `/v1`) |
+| `OPENAI_MODEL` | `gpt-4o` | Model id on that endpoint |
+| `LLMAAS_CLIENT_ID` | empty | Cloud IDP client id (client_credentials) |
+| `LLMAAS_CLIENT_SECRET` | empty | Cloud IDP client secret |
+| `LLMAAS_TOKEN_URL` | VW IDP token URL | OpenID token endpoint |
+| `LLMAAS_API_CLIENT_ID` | empty | Optional `X-LLM-API-CLIENT-ID: Bearer …` header |
 | `HOST` | `127.0.0.1` | API bind host |
 | `PORT` | `8000` | API port |
 
 **Local testing:** Gemini.
 
-**Org demo:** switch provider, do not keep a Gemini key in the demo machine if policy forbids it.
+**Org demo (VW LLMaaS):** client id, secret, and optional API client id live only in `.env`. Then:
 
 ```
 LLM_PROVIDER=openai
-OPENAI_API_KEY=...
-OPENAI_BASE_URL=https://your-org-endpoint/v1
-OPENAI_MODEL=gpt-4o-mini
+OPENAI_BASE_URL=https://llmapi.ai.vwgroup.com
+OPENAI_MODEL=gpt-4o
+LLMAAS_CLIENT_ID=...
+LLMAAS_CLIENT_SECRET=...
+LLMAAS_TOKEN_URL=https://idp.cloud.vwgroup.com/auth/realms/kums-fa/protocol/openid-connect/token
+LLMAAS_API_CLIENT_ID=
 ```
+
+Smoke-test without starting the UI:
+
+```bash
+backend/.venv/bin/python backend/test_llm.py
+```
+
+That script lists models the endpoint reports, then sends `Hi` and prints the reply.
+
+If the IDP returns `Realm does not exist`, the realm in `LLMAAS_TOKEN_URL` is wrong. If it returns `invalid_client`, the client id or secret does not match that realm.
 
 Restart the API after changing `.env` (uvicorn `--reload` picks up code, not always env).
 

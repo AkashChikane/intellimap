@@ -1,9 +1,5 @@
-const SUGGESTIONS = [
-  { label: "Focus the seed application", prompt: "Focus the seed application on the diagram." },
-  { label: "Where is the bottleneck?", prompt: "Which application is a concentration point or bottleneck in this frame?" },
-  { label: "Show unresolved IDs", prompt: "List unresolved application IDs and focus the first one." },
-  { label: "Sensitive flows", prompt: "Which information flows are Confidential, PII, or PCI? Highlight the apps involved." },
-];
+import { useState } from "react";
+import { useI18n } from "../i18n";
 
 export default function Assistant({
   messages,
@@ -19,6 +15,15 @@ export default function Assistant({
   onAction,
   onFocusNode,
 }) {
+  const { t } = useI18n();
+  const [showIntro, setShowIntro] = useState(true);
+  const suggestions = [
+    { label: t("suggestFocus"), prompt: t("suggestFocusPrompt") },
+    { label: t("suggestBottleneck"), prompt: t("suggestBottleneckPrompt") },
+    { label: t("suggestUnresolved"), prompt: t("suggestUnresolvedPrompt") },
+    { label: t("suggestSensitive"), prompt: t("suggestSensitivePrompt") },
+  ];
+
   function onSubmit(e) {
     e.preventDefault();
     if (draft.trim() && !busy) onSend(draft.trim());
@@ -35,18 +40,24 @@ export default function Assistant({
       onDrop={onDropNode}
     >
       <div className="assistant-head">
-        <div>
-          <div className="kicker">Assistant</div>
-          <p className="muted">Grounded in this frame. Suggestions are not source facts.</p>
-        </div>
+        <div className="kicker">{t("assistantKicker")}</div>
+        <button
+          type="button"
+          className="panel-hide"
+          aria-expanded={showIntro}
+          onClick={() => setShowIntro((v) => !v)}
+        >
+          {showIntro ? t("hide") : t("show")}
+        </button>
       </div>
+      {showIntro && <p className="muted assistant-lead">{t("assistantLead")}</p>}
 
       <div className="assistant-thread">
-        {messages.length === 0 && (
+        {messages.length === 0 && showIntro && (
           <div className="assistant-empty">
-            <p>Ask about ownership, dependencies, or ask me to focus a node on the diagram.</p>
+            <p>{t("assistantEmpty")}</p>
             <div className="assistant-suggestions">
-              {SUGGESTIONS.map((s) => (
+              {suggestions.map((s) => (
                 <button key={s.label} type="button" className="suggest-chip" onClick={() => onSend(s.prompt)}>
                   {s.label}
                 </button>
@@ -56,7 +67,7 @@ export default function Assistant({
         )}
         {messages.map((m, idx) => (
           <div key={idx} className={`aui-msg ${m.role}`}>
-            <div className="aui-role">{m.role === "user" ? "You" : "IntelliMap"}</div>
+            <div className="aui-role">{m.role === "user" ? t("you") : "IntelliMap"}</div>
             <div className="aui-bubble">{m.content}</div>
             {m.role === "assistant" && (m.cards || []).length > 0 && (
               <div className="aui-cards">
@@ -69,7 +80,7 @@ export default function Assistant({
                     </div>
                     {card.type === "node" && card.id && (
                       <button type="button" className="btn btn-steel" onClick={() => onFocusNode(card.id)}>
-                        Focus
+                        {t("focus")}
                       </button>
                     )}
                   </div>
@@ -92,7 +103,12 @@ export default function Assistant({
             )}
           </div>
         ))}
-        {busy && <div className="aui-msg assistant"><div className="aui-role">IntelliMap</div><div className="aui-bubble muted">Thinking…</div></div>}
+        {busy && (
+          <div className="aui-msg assistant">
+            <div className="aui-role">IntelliMap</div>
+            <div className="aui-bubble muted">{t("thinking")}</div>
+          </div>
+        )}
       </div>
 
       {chips.length > 0 && (
@@ -117,11 +133,11 @@ export default function Assistant({
         <input
           value={draft}
           onChange={(e) => setDraft(e.target.value)}
-          placeholder="Ask, or drop a node here…"
+          placeholder={t("askPlaceholder")}
           disabled={busy}
         />
         <button className="btn btn-primary" type="submit" disabled={busy || !draft.trim()}>
-          Send
+          {t("send")}
         </button>
       </form>
     </div>

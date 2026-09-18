@@ -16,15 +16,17 @@ def provider_name() -> str:
 
 def available() -> bool:
     if provider_name() == "openai":
-        return bool(config.OPENAI_API_KEY)
+        from .llmaas import openai_configured
+
+        return openai_configured()
     return bool(config.GEMINI_API_KEY)
 
 
 def complete_json(system: str, user: str) -> dict:
     if not available():
         raise AIProviderError(
-            "No API key configured. Set GEMINI_API_KEY or OPENAI_API_KEY in .env "
-            "and LLM_PROVIDER=gemini|openai."
+            "No API key configured. Set GEMINI_API_KEY, OPENAI_API_KEY, or LLMaaS "
+            "client credentials in .env and LLM_PROVIDER=gemini|openai."
         )
     try:
         if provider_name() == "openai":
@@ -41,7 +43,7 @@ def complete_json(system: str, user: str) -> dict:
 def complete_text(system: str, user: str) -> str:
     if not available():
         raise AIProviderError(
-            "No API key configured. Set GEMINI_API_KEY or OPENAI_API_KEY in .env."
+            "No API key configured. Set GEMINI_API_KEY, OPENAI_API_KEY, or LLMaaS credentials in .env."
         )
     try:
         if provider_name() == "openai":
@@ -78,10 +80,10 @@ def _gemini(system: str, user: str, json_mode: bool = True) -> str:
 
 def _openai(system: str, user: str, json_mode: bool = True) -> str:
     try:
-        from openai import OpenAI
+        from .llmaas import init_openai_client, llmaas_configured
     except ImportError as exc:
-        raise AIProviderError("openai is not installed") from exc
-    client = OpenAI(api_key=config.OPENAI_API_KEY, base_url=config.OPENAI_BASE_URL)
+        raise AIProviderError("openai client helper is not available") from exc
+    client = init_openai_client()
     kwargs = {
         "model": config.OPENAI_MODEL,
         "messages": [
@@ -89,8 +91,10 @@ def _openai(system: str, user: str, json_mode: bool = True) -> str:
             {"role": "user", "content": user},
         ],
         "temperature": 0.2,
+        "stream": False,
     }
-    if json_mode:
+    # Internal LLMaaS often rejects OpenAI json_object mode; the prompt still asks for JSON.
+    if json_mode and not llmaas_configured():
         kwargs["response_format"] = {"type": "json_object"}
     response = client.chat.completions.create(**kwargs)
     text = response.choices[0].message.content or ""
