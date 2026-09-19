@@ -1170,6 +1170,36 @@ html[data-theme="dark"] .sheet-tabs { background: #163d28; }
   justify-content: space-between;
   gap: 8px;
 }
+.assistant-head-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.assistant-scope {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 8px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--surface-2);
+}
+.assistant-scope.is-pinned {
+  border-color: color-mix(in srgb, var(--steel) 55%, var(--border));
+}
+.assistant-scope-label {
+  margin: 0;
+  font-size: 12px;
+}
+.chip-x {
+  cursor: pointer;
+  min-width: 18px;
+  min-height: 18px;
+  border-radius: 999px;
+}
+.chip-x:hover {
+  background: color-mix(in srgb, #000 18%, transparent);
+}
 .assistant-lead { margin: 0; }
 .assistant.drop-on { outline: 2px dashed var(--steel); outline-offset: 4px; border-radius: 10px; }
 .assistant-thread {

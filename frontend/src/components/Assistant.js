@@ -11,6 +11,8 @@ export default function Assistant({
   setDropOn,
   onDropNode,
   onSend,
+  onClearNodes,
+  onClearChat,
   busy,
   onAction,
   onFocusNode,
@@ -41,14 +43,21 @@ export default function Assistant({
     >
       <div className="assistant-head">
         <div className="kicker">{t("assistantKicker")}</div>
-        <button
-          type="button"
-          className="panel-hide"
-          aria-expanded={showIntro}
-          onClick={() => setShowIntro((v) => !v)}
-        >
-          {showIntro ? t("hide") : t("show")}
-        </button>
+        <div className="assistant-head-actions">
+          {(messages.length > 0 || chips.length > 0) && (
+            <button type="button" className="panel-hide" onClick={onClearChat} disabled={busy}>
+              {t("newChat")}
+            </button>
+          )}
+          <button
+            type="button"
+            className="panel-hide"
+            aria-expanded={showIntro}
+            onClick={() => setShowIntro((v) => !v)}
+          >
+            {showIntro ? t("hide") : t("show")}
+          </button>
+        </div>
       </div>
       {showIntro && <p className="muted assistant-lead">{t("assistantLead")}</p>}
 
@@ -111,23 +120,33 @@ export default function Assistant({
         )}
       </div>
 
-      {chips.length > 0 && (
-        <div className="chips">
-          {chips.map((c) => (
-            <span className="chip" key={c.id}>
-              {c.label || c.id}
-              <button
-                type="button"
-                className="chip-x"
-                aria-label={`Remove ${c.label || c.id}`}
-                onClick={() => setChips((list) => list.filter((x) => x.id !== c.id))}
-              >
-                ×
-              </button>
-            </span>
-          ))}
-        </div>
-      )}
+      <div className={`assistant-scope ${chips.length ? "is-pinned" : ""}`}>
+        {chips.length > 0 ? (
+          <>
+            <p className="assistant-scope-label">{t("askingPinned")}</p>
+            <div className="chips">
+              {chips.map((c) => (
+                <span className="chip" key={c.id}>
+                  {c.label || c.id}
+                  <button
+                    type="button"
+                    className="chip-x"
+                    aria-label={`${t("removeNode")} ${c.label || c.id}`}
+                    onClick={() => setChips((list) => list.filter((x) => x.id !== c.id))}
+                  >
+                    ×
+                  </button>
+                </span>
+              ))}
+            </div>
+            <button type="button" className="btn btn-ghost" onClick={onClearNodes} disabled={busy}>
+              {t("wholeDiagram")}
+            </button>
+          </>
+        ) : (
+          <p className="assistant-scope-label muted">{t("askingWholeDiagram")}</p>
+        )}
+      </div>
 
       <form className="composer aui-composer" onSubmit={onSubmit}>
         <input

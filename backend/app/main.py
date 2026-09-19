@@ -334,7 +334,7 @@ def chat(run_id: str, body: ChatBody):
         store, run_id, body.frame_type, body.frame_id, body.hops, body.hide_unresolved
     )
     try:
-        result = chat_mod.chat(graph, body.messages, body.dropped)
+        result = chat_mod.chat(store, run_id, graph, body.messages, body.dropped)
     except AIProviderError as exc:
         raise HTTPException(503, str(exc)) from exc
     return result

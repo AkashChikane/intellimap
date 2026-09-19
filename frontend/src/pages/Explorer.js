@@ -312,10 +312,16 @@ export default function Explorer({ runId }) {
     pendingFocusRef.current = id;
     setHighlightIds([id]);
     const node = (graph?.nodes || []).find((n) => n.id === id);
-    if (node) setSelected(node);
+    if (node) {
+      setSelected(node);
+      setShowInspector(true);
+      requestAnimationFrame(() => zoomToNode(id));
+      setTimeout(() => zoomToNode(id), 140);
+      return;
+    }
+    setFrameType("application");
+    setFrameId(id);
     setShowInspector(true);
-    requestAnimationFrame(() => zoomToNode(id));
-    setTimeout(() => zoomToNode(id), 140);
   }
 
   function closeSpotlight() {
@@ -346,7 +352,26 @@ export default function Explorer({ runId }) {
     }
     if (action.type === "hide_unresolved") {
       setHideUnresolved(!!action.value);
+      return;
     }
+    if (action.type === "open_frame" && action.frame_id) {
+      const nextType = action.frame_type || "application";
+      setFrameType(nextType);
+      setFrameId(action.frame_id);
+      setShowInspector(true);
+      pendingFocusRef.current = action.frame_id;
+      setHighlightIds([action.frame_id]);
+    }
+  }
+
+  function clearNodeContext() {
+    setChips([]);
+  }
+
+  function clearChat() {
+    setMessages([]);
+    setChips([]);
+    setDraft("");
   }
 
   async function sendChat(text) {
@@ -787,6 +812,8 @@ export default function Explorer({ runId }) {
             setDropOn={setDropOn}
             onDropNode={onDropNode}
             onSend={sendChat}
+            onClearNodes={clearNodeContext}
+            onClearChat={clearChat}
             busy={chatBusy}
             onAction={runAction}
             onFocusNode={focusNode}
